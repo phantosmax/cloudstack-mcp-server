@@ -2,6 +2,10 @@
 
 A high-performance MCP (Model Context Protocol) server for Apache CloudStack API integration. This server provides comprehensive tools for managing CloudStack infrastructure through the MCP protocol, enabling seamless integration with AI assistants and automation tools.
 
+<a href="https://glama.ai/mcp/servers/@phantosmax/cloudstack-mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@phantosmax/cloudstack-mcp-server/badge" alt="CloudStack Server MCP server" />
+</a>
+
 ## Features
 
 - **🔧 Complete VM Lifecycle Management**: Deploy, start, stop, reboot, and destroy virtual machines
