@@ -134,3 +134,32 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Testing artifacts and generated files
+# Note: Test source files (tests/*.ts, jest.config.js) are tracked
+# Only generated test artifacts are ignored below
+coverage/
+.nyc_output/
+*.lcov
+junit.xml
+test-results/
+test-results.xml
+
+# Jest cache and temporary files
+.jest/
+
+# Test environment files
+.env.test
+.env.testing
+
+# Test snapshots (if using Jest snapshots)
+**/__snapshots__/
+
+# Test output and reports
+test-output/
+reports/
+mochawesome-report/
+
+# IDE test configurations
+.vscode/settings.json
+.idea/runConfigurations/

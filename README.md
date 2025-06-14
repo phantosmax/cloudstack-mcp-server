@@ -60,9 +60,9 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 }
 ```
 
-## Available Tools (9 Tools)
+## Available Tools (45 Tools)
 
-### 🖥️ Virtual Machine Management
+### 🖥️ Virtual Machine Management (7 Tools)
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
@@ -71,15 +71,86 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 | `start_virtual_machine` | Start a stopped virtual machine | `id` (required) |
 | `stop_virtual_machine` | Stop a running virtual machine | `id` (required), `forced` (optional) |
 | `reboot_virtual_machine` | Reboot a virtual machine | `id` (required) |
-| `destroy_virtual_machine` | Destroy a virtual machine | `id` (required), `expunge` (optional) |
+| `destroy_virtual_machine` | Destroy a virtual machine | `id` (required), `confirm` (required), `expunge` (optional) |
 | `deploy_virtual_machine` | Deploy a new virtual machine | `serviceofferingid`, `templateid`, `zoneid` (required), `name`, `displayname` (optional) |
 
-### 🏗️ Infrastructure Discovery
+### ⚙️ VM Advanced Operations (4 Tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `scale_virtual_machine` | Scale (resize) a virtual machine | `id`, `serviceofferingid`, `confirm` (required) |
+| `migrate_virtual_machine` | Migrate VM to another host | `virtualmachineid`, `confirm` (required), `hostid` (optional) |
+| `reset_password_virtual_machine` | Reset password for a virtual machine | `id`, `confirm` (required) |
+| `change_service_offering_virtual_machine` | Change service offering for a VM | `id`, `serviceofferingid` (required) |
+
+### 💾 Storage Management (7 Tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_volumes` | List storage volumes | `virtualmachineid`, `type`, `zoneid` |
+| `create_volume` | Create a new storage volume | `name`, `zoneid` (required), `diskofferingid`, `size` |
+| `attach_volume` | Attach a volume to a virtual machine | `id`, `virtualmachineid` (required) |
+| `detach_volume` | Detach a volume from a virtual machine | `id`, `confirm` (required) |
+| `resize_volume` | Resize a storage volume | `id`, `size`, `confirm` (required) |
+| `create_snapshot` | Create a snapshot of a volume | `volumeid` (required), `name` |
+| `list_snapshots` | List volume snapshots | `volumeid`, `snapshottype` |
+
+### 🌐 Networking (7 Tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_networks` | List networks | `zoneid`, `type` |
+| `create_network` | Create a new network | `name`, `networkofferingid`, `zoneid` (required), `displaytext` |
+| `list_public_ip_addresses` | List public IP addresses | `zoneid`, `associatednetworkid` |
+| `associate_ip_address` | Acquire a new public IP address | `zoneid` (required), `networkid` |
+| `enable_static_nat` | Enable static NAT for an IP address | `ipaddressid`, `virtualmachineid` (required) |
+| `create_firewall_rule` | Create a firewall rule | `ipaddressid`, `protocol` (required), `startport`, `endport`, `cidrlist` |
+| `list_load_balancer_rules` | List load balancer rules | `publicipid`, `zoneid` |
+
+### 📊 Monitoring & Analytics (5 Tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_virtual_machine_metrics` | Get virtual machine performance metrics | `ids` |
+| `list_events` | List CloudStack events | `type`, `level`, `startdate`, `pagesize` |
+| `list_alerts` | List system alerts | `type` |
+| `list_capacity` | List system capacity information | `zoneid`, `type` |
+| `list_async_jobs` | List asynchronous jobs | `jobstatus`, `jobresulttype` |
+
+### 👥 Account & User Management (4 Tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_accounts` | List CloudStack accounts | `domainid`, `accounttype` |
+| `list_users` | List users | `accountid`, `username` |
+| `list_domains` | List CloudStack domains | `name` |
+| `list_usage_records` | List resource usage records | `startdate`, `enddate` (required), `type` |
+
+### 🏗️ Infrastructure Discovery (2 Tools)
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `list_zones` | List all available zones | `available` (optional) |
 | `list_templates` | List available VM templates | `templatefilter`, `zoneid` (optional) |
+
+### 🔧 System Administration (5 Tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_hosts` | List physical hosts | `zoneid`, `type`, `state` |
+| `list_clusters` | List host clusters | `zoneid` |
+| `list_storage_pools` | List storage pools | `zoneid`, `clusterid` |
+| `list_system_vms` | List system virtual machines | `zoneid`, `systemvmtype` |
+| `list_service_offerings` | List service offerings | `name`, `domainid` |
+
+### 🔐 Security & Compliance (4 Tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `list_ssh_key_pairs` | List SSH key pairs | `name` |
+| `create_ssh_key_pair` | Create a new SSH key pair | `name` (required) |
+| `list_security_groups` | List security groups | `securitygroupname` |
+| `create_security_group_rule` | Create a security group ingress rule | `securitygroupid`, `protocol` (required), `startport`, `endport`, `cidrlist` |
 
 ## Example Usage
 
