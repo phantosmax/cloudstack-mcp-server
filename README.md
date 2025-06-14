@@ -25,7 +25,7 @@ A high-performance MCP (Model Context Protocol) server for Apache CloudStack API
 2. **Configure environment variables:**
    Create a `.env` file in the project root:
    ```env
-   CLOUDSTACK_API_URL=http://your-cloudstack-server:8080/client/api
+   CLOUDSTACK_API_URL=https://your-cloudstack-server/client/api
    CLOUDSTACK_API_KEY=your-api-key
    CLOUDSTACK_SECRET_KEY=your-secret-key
    CLOUDSTACK_TIMEOUT=30000
@@ -51,7 +51,7 @@ Add to your MCP client configuration (e.g., Claude Desktop):
       "command": "node",
       "args": ["/path/to/cloudstack-mcp-server/build/index.js"],
       "env": {
-        "CLOUDSTACK_API_URL": "http://your-server:8080/client/api",
+        "CLOUDSTACK_API_URL": "https://your-cloudstack-server/client/api",
         "CLOUDSTACK_API_KEY": "your-api-key",
         "CLOUDSTACK_SECRET_KEY": "your-secret-key"
       }
