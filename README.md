@@ -71,8 +71,8 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 | `start_virtual_machine` | Start a stopped virtual machine | `id` (required) |
 | `stop_virtual_machine` | Stop a running virtual machine | `id` (required), `forced` (optional) |
 | `reboot_virtual_machine` | Reboot a virtual machine | `id` (required) |
-| `destroy_virtual_machine` | Destroy a virtual machine | `id` (required), `confirm` (required), `expunge` (optional) |
-| `deploy_virtual_machine` | Deploy a new virtual machine | `serviceofferingid`, `templateid`, `zoneid` (required), `name`, `displayname` (optional) |
+| `destroy_virtual_machine` | Destroy a VM with proper workflow (handles all states) | `id` (required), `confirm` (required), `expunge` (optional) |
+| `deploy_virtual_machine` | Deploy a new VM (auto-selects network for Advanced zones) | `serviceofferingid`, `templateid`, `zoneid` (required), `name`, `displayname`, `networkids` (optional) |
 
 ### ⚙️ VM Advanced Operations (4 Tools)
 
