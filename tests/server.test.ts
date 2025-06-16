@@ -102,8 +102,8 @@ describe('CloudStack MCP Server', () => {
       ];
 
       requiredMethods.forEach(method => {
-        expect(mockClient[method]).toBeDefined();
-        expect(typeof mockClient[method]).toBe('function');
+        expect((mockClient as any)[method]).toBeDefined();
+        expect(typeof (mockClient as any)[method]).toBe('function');
       });
     });
   });
