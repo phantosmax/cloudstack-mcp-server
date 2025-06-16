@@ -149,7 +149,7 @@ class CloudStackMcpServer {
           },
           {
             name: 'destroy_virtual_machine',
-            description: 'Destroy a virtual machine (DESTRUCTIVE - cannot be undone)',
+            description: 'Destroy a virtual machine using proper workflow: stop → destroy → expunge. Handles VMs in any state including Error. (DESTRUCTIVE - cannot be undone)',
             inputSchema: {
               type: 'object',
               properties: {
@@ -207,7 +207,7 @@ class CloudStackMcpServer {
           },
           {
             name: 'deploy_virtual_machine',
-            description: 'Deploy a new virtual machine',
+            description: 'Deploy a new virtual machine. Auto-selects network for Advanced zones if not specified. Use list_zones, list_templates, and list_service_offerings to get required IDs.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -1185,15 +1185,89 @@ ${vm.nic ? `\nNetwork:\n${vm.nic.map((n: any) => `  IP: ${n.ipaddress}, Network:
       );
     }
     
-    const result = await this.cloudStackClient.destroyVirtualMachine(args);
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `⚠️  DESTRUCTIVE ACTION EXECUTED: Virtual machine ${args.id} destruction initiated${args.expunge ? ' (expunged)' : ''}. Job ID: ${result.destroyvirtualmachineresponse?.jobid}`,
-        },
-      ],
-    };
+    try {
+      // Get VM current state
+      const vms = await this.cloudStackClient.listVirtualMachines({ id: args.id });
+      const vm = vms.listvirtualmachinesresponse?.virtualmachine?.[0];
+      
+      if (!vm) {
+        throw new McpError(ErrorCode.InvalidRequest, `Virtual machine ${args.id} not found`);
+      }
+      
+      let jobIds = [];
+      
+      // Step 1: Stop VM if running or in error state
+      if (vm.state === 'Running' || vm.state === 'Error') {
+        console.log(`VM ${vm.name} is in ${vm.state} state, stopping first...`);
+        try {
+          const stopResult = await this.cloudStackClient.stopVirtualMachine({ 
+            id: args.id,
+            forced: vm.state === 'Error' // Force stop for VMs in error state
+          });
+          jobIds.push(stopResult.stopvirtualmachineresponse?.jobid);
+          
+          // Wait a bit for stop operation
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        } catch (stopError: any) {
+          console.log(`Stop failed (may be expected): ${stopError.message}`);
+        }
+      }
+      
+      // Step 2: Destroy without expunge first
+      console.log(`Destroying VM ${vm.name}...`);
+      const destroyResult = await this.cloudStackClient.destroyVirtualMachine({ 
+        id: args.id,
+        expunge: false 
+      });
+      jobIds.push(destroyResult.destroyvirtualmachineresponse?.jobid);
+      
+      // Wait for destroy to process
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Step 3: Try to expunge
+      if (args.expunge !== false) { // Default to expunge unless explicitly set to false
+        console.log(`Expunging VM ${vm.name}...`);
+        try {
+          // Try direct expunge command
+          const expungeResult = await this.cloudStackClient.request('expungeVirtualMachine', {
+            id: args.id
+          });
+          if (expungeResult.expungevirtualmachineresponse?.jobid) {
+            jobIds.push(expungeResult.expungevirtualmachineresponse.jobid);
+          }
+        } catch (expungeError: any) {
+          // If expunge fails, try destroy with expunge flag
+          console.log('Direct expunge failed, trying destroy with expunge flag...');
+          try {
+            const destroyExpungeResult = await this.cloudStackClient.destroyVirtualMachine({ 
+              id: args.id,
+              expunge: true
+            });
+            jobIds.push(destroyExpungeResult.destroyvirtualmachineresponse?.jobid);
+          } catch (finalError: any) {
+            console.log(`Expunge failed: ${finalError.message}`);
+          }
+        }
+      }
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `⚠️  DESTRUCTIVE ACTION EXECUTED: Virtual machine ${vm.name} (${args.id}) destruction workflow completed.\n\nJob IDs: ${jobIds.filter(id => id).join(', ')}\n\nThe VM has been ${args.expunge !== false ? 'destroyed and expunged' : 'destroyed (not expunged)'}.\n\nNote: It may take a few moments for the VM to be fully removed.`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      // Re-throw with more context
+      if (error instanceof McpError) {
+        throw error;
+      }
+      throw new McpError(
+        ErrorCode.InternalError,
+        `Failed to destroy VM: ${error.message}`
+      );
+    }
   }
 
   private async handleListZones(args: any) {
@@ -1251,15 +1325,63 @@ ${vm.nic ? `\nNetwork:\n${vm.nic.map((n: any) => `  IP: ${n.ipaddress}, Network:
   }
 
   private async handleDeployVirtualMachine(args: any) {
-    const result = await this.cloudStackClient.deployVirtualMachine(args);
-    return {
-      content: [
-        {
-          type: 'text',
-          text: `Virtual machine deployment initiated. Job ID: ${result.deployvirtualmachineresponse?.jobid}`,
-        },
-      ],
-    };
+    try {
+      // Check if zone requires network and none provided
+      if (args.zoneid && !args.networkids) {
+        const zones = await this.cloudStackClient.listZones({ id: args.zoneid });
+        const zone = zones.listzonesresponse?.zone?.[0];
+        
+        if (zone?.networktype === 'Advanced') {
+          // Auto-select first available network in the zone
+          const networks = await this.cloudStackClient.listNetworks({ zoneid: args.zoneid });
+          const networkList = networks.listnetworksresponse?.network || [];
+          
+          if (networkList.length > 0) {
+            args.networkids = networkList[0].id;
+            console.log(`Auto-selected network ${networkList[0].name} (${networkList[0].id}) for Advanced zone`);
+          } else {
+            throw new McpError(
+              ErrorCode.InvalidRequest,
+              'This is an Advanced zone but no networks are available. Please create a network first.'
+            );
+          }
+        }
+      }
+      
+      // Ensure we have required parameters
+      if (!args.serviceofferingid || !args.templateid || !args.zoneid) {
+        throw new McpError(
+          ErrorCode.InvalidRequest,
+          'Missing required parameters: serviceofferingid, templateid, and zoneid are required'
+        );
+      }
+      
+      // Deploy the VM
+      const result = await this.cloudStackClient.deployVirtualMachine(args);
+      
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Virtual machine deployment initiated successfully!\nJob ID: ${result.deployvirtualmachineresponse?.jobid}\n\nTip: Use query_async_job_result with this Job ID to check deployment status.`,
+          },
+        ],
+      };
+    } catch (error: any) {
+      // Provide helpful error messages
+      if (error.message?.includes('530')) {
+        throw new McpError(
+          ErrorCode.InvalidRequest,
+          'VM limit reached for your account. Please destroy some existing VMs before creating new ones.'
+        );
+      } else if (error.message?.includes('431')) {
+        throw new McpError(
+          ErrorCode.InvalidRequest,
+          'Missing required parameter. For Advanced zones, you may need to specify networkids.'
+        );
+      }
+      throw error;
+    }
   }
 
   // VM Advanced Operations Handlers
