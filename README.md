@@ -14,6 +14,8 @@ A high-performance MCP (Model Context Protocol) server for Apache CloudStack API
 - **⚡ High Performance**: Efficient TypeScript implementation with proper error handling
 - **🛡️ Type Safety**: Full TypeScript support with comprehensive interfaces
 - **📊 Rich Information**: Detailed VM metadata including CPU, memory, network, and status
+- **🖥️ Command Line Interface**: Direct CLI access for interactive CloudStack management
+- **🤖 MCP Integration**: Seamless integration with AI assistants via MCP protocol
 
 ## Quick Start
 
@@ -35,13 +37,21 @@ A high-performance MCP (Model Context Protocol) server for Apache CloudStack API
    CLOUDSTACK_TIMEOUT=30000
    ```
 
-3. **Run the server:**
+3. **Build the project:**
    ```bash
-   # Development mode
+   npm run build
+   ```
+
+4. **Run the server:**
+   ```bash
+   # Development mode (MCP server)
    npm run dev
    
-   # Production mode
-   npm run build && npm start
+   # Production mode (MCP server)
+   npm start
+   
+   # CLI mode
+   npm run cli -- --help
    ```
 
 ### MCP Client Integration
@@ -63,6 +73,25 @@ Add to your MCP client configuration (e.g., Claude Desktop):
   }
 }
 ```
+
+### Command Line Interface
+
+For direct command-line access, use the built-in CLI:
+
+```bash
+# Install globally (optional)
+npm link
+
+# Use the CLI
+cloudstack-cli list-vms --state Running
+cloudstack-cli deploy-vm --service-offering-id 1 --template-id 2 --zone-id 3
+cloudstack-cli get-vm --id 12345-67890-abcdef
+
+# See all available commands
+cloudstack-cli --help
+```
+
+For detailed CLI documentation, see [CLI.md](CLI.md).
 
 ## Available Tools (45 Tools)
 
@@ -187,10 +216,12 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 
 ```
 ├── src/
-│   ├── index.ts              # Entry point with environment setup
-│   ├── server.ts             # Main MCP server (468 lines)
-│   └── cloudstack-client.ts  # CloudStack API client (145 lines)
+│   ├── index.ts              # MCP server entry point
+│   ├── server.ts             # Main MCP server implementation
+│   ├── cli.ts                # Command-line interface
+│   └── cloudstack-client.ts  # CloudStack API client
 ├── build/                    # Compiled JavaScript output
+├── CLI.md                   # CLI documentation
 ├── package.json             # Dependencies and scripts
 ├── tsconfig.json            # TypeScript configuration
 └── .env                     # Environment variables (not in repo)
@@ -198,8 +229,9 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 
 ### Architecture Overview
 
-- **`src/index.ts`**: Minimal entry point that loads environment variables and imports the server
-- **`src/server.ts`**: Comprehensive MCP server implementation with 9 tool handlers, error management, and CloudStack integration
+- **`src/index.ts`**: MCP server entry point that loads environment variables and starts the server
+- **`src/server.ts`**: Comprehensive MCP server implementation with 45+ tool handlers, error management, and CloudStack integration
+- **`src/cli.ts`**: Command-line interface for direct CloudStack management via JSON-RPC communication with the MCP server
 - **`src/cloudstack-client.ts`**: Robust CloudStack API client with HMAC-SHA1 authentication, type-safe interfaces, and comprehensive error handling
 
 ## Configuration
@@ -225,11 +257,17 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 # Build TypeScript to JavaScript
 npm run build
 
-# Run in development mode with hot reload
+# Run MCP server in development mode with hot reload
 npm run dev
 
-# Run compiled JavaScript
+# Run CLI in development mode
+npm run dev:cli -- list-vms --help
+
+# Run compiled MCP server
 npm start
+
+# Run compiled CLI
+npm run cli -- list-vms --help
 
 # Type checking only
 npx tsc --noEmit
