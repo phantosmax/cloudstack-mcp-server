@@ -169,3 +169,12 @@ mochawesome-report/
 
 # User-specific files
 CLAUDE.md
+
+# Documentation files (except README.md)
+*.md
+!README.md
+tests/test-mcp-server.sh
+TESTING.md
+test-mcp-server.sh
+test-mcp-server.sh
+TESTING.md
