@@ -1,3 +1,14 @@
+// Add AbortController polyfill for older Node.js versions
+if (!globalThis.AbortController) {
+  try {
+    const polyfill = await import('node-abort-controller');
+    globalThis.AbortController = polyfill.AbortController as any;
+    globalThis.AbortSignal = polyfill.AbortSignal as any;
+  } catch (error) {
+    console.error('Failed to load AbortController polyfill:', error);
+  }
+}
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {

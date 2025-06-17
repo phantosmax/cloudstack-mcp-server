@@ -1,5 +1,16 @@
 #!/usr/bin/env node
 
+// Add AbortController polyfill for older Node.js versions
+if (!globalThis.AbortController) {
+  try {
+    const polyfill = await import('node-abort-controller');
+    globalThis.AbortController = polyfill.AbortController as any;
+    globalThis.AbortSignal = polyfill.AbortSignal as any;
+  } catch (error) {
+    console.error('Failed to load AbortController polyfill:', error);
+  }
+}
+
 import { spawn } from 'child_process';
 import { readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
